@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const FALLBACK_API_BASE_URL = 'http://localhost:4000';
+const FALLBACK_API_BASE_URL = '';
 
 export default function createApiClient(prefix) {
   const baseUrl = import.meta.env.VITE_API_BASE_URL || FALLBACK_API_BASE_URL;
