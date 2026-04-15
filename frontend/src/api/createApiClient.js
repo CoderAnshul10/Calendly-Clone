@@ -1,9 +1,7 @@
 import axios from 'axios';
 
-const FALLBACK_API_BASE_URL = '';
-
 export default function createApiClient(prefix) {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || FALLBACK_API_BASE_URL;
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
   const client = axios.create({
     baseURL: `${baseUrl}${prefix}`,
@@ -13,7 +11,10 @@ export default function createApiClient(prefix) {
   client.interceptors.response.use(
     (res) => res,
     (err) => {
-      const message = err.response?.data?.error || err.message || 'An unexpected error occurred.';
+      const message =
+        err.response?.data?.error ||
+        err.message ||
+        'An unexpected error occurred.';
       return Promise.reject(new Error(message));
     }
   );
