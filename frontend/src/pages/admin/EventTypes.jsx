@@ -64,7 +64,10 @@ export default function EventTypesPage() {
         await adminApi.put(`/event-types/${editingId}`, form);
         toast.success('Event type updated!');
       } else {
-        await adminApi.post('/event-types', form);
+        await adminApi.post('/event-types', {
+        ...form,
+        duration_minutes: Number(form.duration_minutes), // ✅ FIX
+      });
         toast.success('Event type created!');
       }
       setShowModal(false);
