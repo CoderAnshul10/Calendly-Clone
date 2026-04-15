@@ -42,6 +42,15 @@ async function start() {
     await sequelize.authenticate();
     console.log('✅ Database connected.');
     await sequelize.sync({ alter: false }); // Use migrations in production
+    const { User } = require('./models');
+
+    await User.findOrCreate({
+      where: { id: 1 },
+      defaults: {
+      name: 'Admin',
+      email: 'admin@example.com',
+    },
+});
     console.log('✅ Models synced.');
     app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
   } catch (err) {
