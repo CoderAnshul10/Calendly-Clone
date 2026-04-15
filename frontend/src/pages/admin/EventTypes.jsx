@@ -100,9 +100,9 @@ export default function EventTypesPage() {
     }
   }
 
-  function copyBookingLink(slug) {
+  function openBookingLink(slug) {
     const url = `${window.location.origin}/book/${slug}`;
-    navigator.clipboard.writeText(url).then(() => toast.success('Booking link copied!'));
+    window.open(url, '_blank');
   }
 
   async function handleAddQuestion(e) {
@@ -206,13 +206,13 @@ export default function EventTypesPage() {
               {/* Actions */}
               <div className="flex items-center gap-2 pt-1 border-t border-gray-100 flex-wrap">
                 <button
-                  onClick={() => copyBookingLink(et.slug)}
+                  onClick={() => openBookingLink(et.slug)}
                   className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
-                  Copy Link
+                  Open Link
                 </button>
                 <button
                   onClick={() => setShowQModal(et.id)}

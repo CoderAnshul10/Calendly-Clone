@@ -21,7 +21,7 @@ const User = sequelize.define(
     },
     timezone: {
       type: DataTypes.STRING(100),
-      defaultValue: 'UTC',
+      defaultValue: 'Asia/Kolkata',
     },
   },
   {

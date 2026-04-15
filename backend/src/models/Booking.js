@@ -33,7 +33,7 @@ const Booking = sequelize.define(
     },
     timezone: {
       type: DataTypes.STRING(100),
-      defaultValue: 'UTC',
+      defaultValue: 'Asia/Kolkata',
     },
     status: {
       type: DataTypes.ENUM('confirmed', 'cancelled', 'rescheduled'),
@@ -65,6 +65,7 @@ const Booking = sequelize.define(
       { fields: ['event_type_id'] },
       { fields: ['start_time', 'end_time'] },
       { fields: ['status'] },
+      { fields: ['status', 'start_time'] },
     ],
   }
 );

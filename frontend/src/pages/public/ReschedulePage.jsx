@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { addDays, format, getDay } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import toast from 'react-hot-toast';
 import publicApi from '../../api/publicApi';
 import CalendarPicker from '../../components/CalendarPicker';
 import TimeSlotGrid from '../../components/TimeSlotGrid';
 import Spinner from '../../components/Spinner';
 import { usePublicSlots } from '../../hooks';
-import { friendlyDate, getLocalTimezone, getAllTimezones, formatDateTime } from '../../utils/dateUtils';
+import { friendlyDate, getLocalTimezone, formatDateTime } from '../../utils/dateUtils';
 
 export default function ReschedulePage() {
   const { id } = useParams();
@@ -20,7 +22,6 @@ export default function ReschedulePage() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [timezone, setTimezone] = useState(getLocalTimezone);
   const [submitting, setSubmitting] = useState(false);
-  const [allTimezones] = useState(getAllTimezones);
 
   const slug = booking?.eventType?.slug;
   const { slots, loading: loadingSlots } = usePublicSlots(slug, selectedDate, timezone);
@@ -39,6 +40,39 @@ export default function ReschedulePage() {
     }
     fetch();
   }, [id]);
+
+  function getDefaultDate(availability, dateOverrides, timezone) {
+    const activeDays = new Set(availability.filter((a) => a.is_active).map((a) => a.day_of_week));
+    const overrideMap = new Map(dateOverrides.map((o) => [o.override_date, o]));
+    const start = toZonedTime(new Date(), timezone);
+    start.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < 30; i += 1) {
+      const day = addDays(start, i);
+      const dateString = format(day, 'yyyy-MM-dd');
+      const override = overrideMap.get(dateString);
+
+      if (override) {
+        if (!override.is_unavailable) return dateString;
+        continue;
+      }
+
+      if (activeDays.has(getDay(day))) {
+        return dateString;
+      }
+    }
+
+    return null;
+  }
+
+  useEffect(() => {
+    if (!booking || selectedDate) return;
+    const eventType = booking.eventType;
+    const defaultDate = getDefaultDate(eventType?.availability || [], eventType?.dateOverrides || [], timezone);
+    if (defaultDate) {
+      setSelectedDate(defaultDate);
+    }
+  }, [booking, selectedDate, timezone]);
 
   async function handleReschedule() {
     if (!selectedSlot) return;
@@ -99,27 +133,14 @@ export default function ReschedulePage() {
 
         {/* Right panel */}
         <div className="flex-1 p-8">
-          <div className="mb-6 flex items-center gap-2 text-sm">
-            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-            </svg>
-            <select
-              className="text-sm text-gray-600 border-0 bg-transparent focus:outline-none"
-              value={timezone}
-              onChange={(e) => { setTimezone(e.target.value); setSelectedSlot(null); }}
-            >
-              {allTimezones.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
-            </select>
-          </div>
-
-          <div className={`${selectedDate ? 'grid grid-cols-1 sm:grid-cols-2 gap-8' : ''}`}>
+          <div className={selectedDate ? 'grid grid-cols-1 sm:grid-cols-2 gap-8' : ''}>
             <div>
-              <h3 className="text-base font-semibold text-gray-900 mb-4">Select a New Date</h3>
+              <h3 className="text-base font-semibold text-gray-900 mb-4">Select a New Date & Time</h3>
               <CalendarPicker
                 selectedDate={selectedDate}
                 onSelect={(d) => { setSelectedDate(d); setSelectedSlot(null); }}
-                  availability={availability}
-                  dateOverrides={dateOverrides}
+                availability={availability}
+                dateOverrides={dateOverrides}
                 timezone={timezone}
               />
             </div>

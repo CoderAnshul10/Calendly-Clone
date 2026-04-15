@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { addDays, format, getDay } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import toast from 'react-hot-toast';
 import publicApi from '../../api/publicApi';
 import CalendarPicker from '../../components/CalendarPicker';
 import TimeSlotGrid from '../../components/TimeSlotGrid';
 import Spinner from '../../components/Spinner';
 import { usePublicSlots } from '../../hooks';
-import { formatDateTime, friendlyDate, getLocalTimezone, getAllTimezones } from '../../utils/dateUtils';
-
-const STEPS = { CALENDAR: 1, TIME: 2, FORM: 3 };
+import { formatDateTime, friendlyDate, getLocalTimezone } from '../../utils/dateUtils';
 
 export default function BookingPage() {
   const { slug } = useParams();
@@ -18,11 +18,9 @@ export default function BookingPage() {
   const [loadingEvent, setLoadingEvent] = useState(true);
   const [eventError, setEventError] = useState(null);
 
-  const [step, setStep] = useState(STEPS.CALENDAR);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [timezone, setTimezone] = useState(getLocalTimezone);
-  const [allTimezones] = useState(getAllTimezones);
+  const [timezone] = useState(getLocalTimezone);
 
   const [form, setForm] = useState({ name: '', email: '', notes: '' });
   const [answers, setAnswers] = useState({});
@@ -48,13 +46,43 @@ export default function BookingPage() {
   function handleDateSelect(date) {
     setSelectedDate(date);
     setSelectedSlot(null);
-    setStep(STEPS.TIME);
   }
 
   function handleSlotSelect(slot) {
     setSelectedSlot(slot);
-    setStep(STEPS.FORM);
   }
+
+  function getDefaultDate(availability, dateOverrides, timezone) {
+    const activeDays = new Set(availability.filter((a) => a.is_active).map((a) => a.day_of_week));
+    const overrideMap = new Map(dateOverrides.map((o) => [o.override_date, o]));
+    const start = toZonedTime(new Date(), timezone);
+    start.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < 30; i += 1) {
+      const day = addDays(start, i);
+      const dateString = format(day, 'yyyy-MM-dd');
+      const override = overrideMap.get(dateString);
+
+      if (override) {
+        if (!override.is_unavailable) return dateString;
+        continue;
+      }
+
+      if (activeDays.has(getDay(day))) {
+        return dateString;
+      }
+    }
+
+    return null;
+  }
+
+  useEffect(() => {
+    if (!eventType || selectedDate) return;
+    const defaultDate = getDefaultDate(eventType.availability || [], eventType.dateOverrides || [], timezone);
+    if (defaultDate) {
+      setSelectedDate(defaultDate);
+    }
+  }, [eventType, selectedDate, timezone]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -154,27 +182,10 @@ export default function BookingPage() {
 
         {/* Right panel — booking flow */}
         <div className="flex-1 p-8">
-          {/* Timezone selector */}
-          <div className="mb-6 flex items-center gap-2 text-sm">
-            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-            </svg>
-            <select
-              className="text-sm text-gray-600 border-0 bg-transparent focus:outline-none focus:ring-0 cursor-pointer"
-              value={timezone}
-              onChange={(e) => { setTimezone(e.target.value); setSelectedSlot(null); if (step === STEPS.FORM) setStep(STEPS.TIME); }}
-            >
-              {allTimezones.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
-            </select>
-          </div>
-
-          {/* STEP 1: Calendar */}
-          {(step === STEPS.CALENDAR || step === STEPS.TIME) && (
-            <div className={`${step === STEPS.TIME ? 'grid grid-cols-1 sm:grid-cols-2 gap-8' : ''}`}>
+          {!selectedSlot ? (
+            <div className={selectedDate ? 'grid grid-cols-1 sm:grid-cols-2 gap-8' : ''}>
               <div>
-                <h3 className="text-base font-semibold text-gray-900 mb-4">
-                  {step === STEPS.CALENDAR ? 'Select a Date' : 'Select a Date & Time'}
-                </h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Select a Date & Time</h3>
                 <CalendarPicker
                   selectedDate={selectedDate}
                   onSelect={handleDateSelect}
@@ -184,8 +195,7 @@ export default function BookingPage() {
                 />
               </div>
 
-              {/* STEP 2: Time slots */}
-              {step === STEPS.TIME && selectedDate && (
+              {selectedDate && (
                 <div>
                   <h3 className="text-base font-semibold text-gray-900 mb-1">
                     {friendlyDate(`${selectedDate}T12:00:00Z`, timezone)}
@@ -201,13 +211,10 @@ export default function BookingPage() {
                 </div>
               )}
             </div>
-          )}
-
-          {/* STEP 3: Booking form */}
-          {step === STEPS.FORM && (
+          ) : (
             <div>
               <button
-                onClick={() => { setStep(STEPS.TIME); setSelectedSlot(null); }}
+                onClick={() => { setSelectedSlot(null); }}
                 className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 mb-5 font-medium"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

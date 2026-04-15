@@ -26,6 +26,7 @@ const BookingAnswer = sequelize.define(
   {
     tableName: 'booking_answers',
     timestamps: false,
+    indexes: [{ fields: ['booking_id'] }],
   }
 );
 

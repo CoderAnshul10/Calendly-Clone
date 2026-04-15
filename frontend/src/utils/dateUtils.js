@@ -37,24 +37,32 @@ export function friendlyDate(isoString, timezone = 'UTC') {
 }
 
 /**
- * Get the user's local timezone via Intl API.
+ * Get the user's local timezone. Defaults to Asia/Kolkata (IST).
  */
 export function getLocalTimezone() {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return 'Asia/Kolkata';
 }
 
 /**
- * List all IANA timezones supported by the browser.
+ * List all IANA timezones supported by the browser. Places Asia/Kolkata first.
  */
 export function getAllTimezones() {
   try {
-    return Intl.supportedValuesOf('timeZone');
+    const timezones = Intl.supportedValuesOf('timeZone');
+    // Move Asia/Kolkata to the front
+    const kolkata = 'Asia/Kolkata';
+    const index = timezones.indexOf(kolkata);
+    if (index > 0) {
+      timezones.splice(index, 1);
+      timezones.unshift(kolkata);
+    }
+    return timezones;
   } catch {
     // Fallback list for older browsers
     return [
-      'UTC', 'America/New_York', 'America/Chicago', 'America/Denver',
+      'Asia/Kolkata', 'UTC', 'America/New_York', 'America/Chicago', 'America/Denver',
       'America/Los_Angeles', 'Europe/London', 'Europe/Paris', 'Asia/Tokyo',
-      'Asia/Kolkata', 'Australia/Sydney',
+      'Australia/Sydney',
     ];
   }
 }

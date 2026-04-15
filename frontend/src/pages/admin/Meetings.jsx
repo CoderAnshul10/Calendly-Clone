@@ -64,9 +64,14 @@ function MeetingCard({ booking, onCancelled }) {
             </div>
           </div>
           {booking.status === 'confirmed' && (
-            <button onClick={() => setShowCancel(true)} className="btn-danger text-sm flex-shrink-0">
-              Cancel
-            </button>
+            <div className="flex gap-2 flex-shrink-0 flex-wrap">
+              <a href={`/reschedule/${booking.id}`} className="btn-primary text-sm">
+                Reschedule
+              </a>
+              <button onClick={() => setShowCancel(true)} className="btn-danger text-sm">
+                Cancel
+              </button>
+            </div>
           )}
         </div>
       </div>

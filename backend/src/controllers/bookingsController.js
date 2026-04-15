@@ -221,7 +221,18 @@ async function getBooking(req, res, next) {
       ],
     });
     if (!booking) return res.status(404).json({ error: 'Booking not found.' });
-    res.json(booking);
+
+    // Fetch availability and date overrides for the reschedule page
+    const [availability, dateOverrides] = await Promise.all([
+      Availability.findAll({ where: { user_id: ADMIN_USER_ID }, order: [['day_of_week', 'ASC']] }),
+      DateOverride.findAll({ where: { user_id: ADMIN_USER_ID }, order: [['override_date', 'ASC']] }),
+    ]);
+
+    const bookingJson = booking.toJSON();
+    bookingJson.eventType.availability = availability;
+    bookingJson.eventType.dateOverrides = dateOverrides;
+
+    res.json(bookingJson);
   } catch (err) {
     next(err);
   }

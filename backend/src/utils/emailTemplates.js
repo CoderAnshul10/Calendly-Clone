@@ -51,6 +51,19 @@ function baseTemplate(content) {
 </html>`;
 }
 
+function formatAnswersHtml(answers) {
+  if (!answers || answers.length === 0) return '';
+  const rows = answers.map((answer) => `
+    <div class="info-row"><span class="info-label">${answer.question}</span><span class="info-value">${answer.answer || 'No answer provided'}</span></div>
+  `).join('');
+  return `
+    <div style="margin-top: 16px;">
+      <h2 style="font-size: 16px; color: #111827; margin-bottom: 12px;">Question Answers</h2>
+      ${rows}
+    </div>
+  `;
+}
+
 function bookingConfirmationEmail({ booking, eventType, hostName, isAdmin }) {
   const startFormatted = formatDateTime(booking.start_time, booking.timezone);
   const cancelUrl = `${process.env.APP_URL}/cancel/${booking.id}`;
@@ -76,6 +89,7 @@ function bookingConfirmationEmail({ booking, eventType, hostName, isAdmin }) {
       <div class="info-row"><span class="info-label">When</span><span class="info-value">${startFormatted}</span></div>
       <div class="info-row"><span class="info-label">Invitee</span><span class="info-value">${booking.invitee_name} (${booking.invitee_email})</span></div>
       ${booking.notes ? `<div class="info-row"><span class="info-label">Notes</span><span class="info-value">${booking.notes}</span></div>` : ''}
+      ${formatAnswersHtml(booking.answers)}
       <hr class="divider" />
       ${!isAdmin ? `
         <p style="margin:0 0 12px;font-size:14px;color:#374151;">Need to make changes?</p>
