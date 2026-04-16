@@ -1,13 +1,27 @@
 import axios from 'axios';
 
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL;
-const baseUrl = rawBaseUrl ? rawBaseUrl.replace(/\/$/, '') : null;
+let baseUrl = null;
+
+if (rawBaseUrl) {
+  const normalizedBaseUrl = rawBaseUrl.replace(/\/$/, '');
+  try {
+    new URL(normalizedBaseUrl);
+    baseUrl = normalizedBaseUrl;
+  } catch (err) {
+    console.error(
+      'Invalid VITE_API_BASE_URL value:',
+      normalizedBaseUrl,
+      'Please use a valid https://... Railway backend URL without underscores.'
+    );
+  }
+}
 
 console.log('Resolved VITE_API_BASE_URL:', baseUrl);
 
 if (!baseUrl) {
   console.error(
-    'Missing VITE_API_BASE_URL. Set this environment variable in Vercel to your Railway backend URL.'
+    'Missing or invalid VITE_API_BASE_URL. Set this environment variable in Vercel to your Railway backend URL.'
   );
 }
 
