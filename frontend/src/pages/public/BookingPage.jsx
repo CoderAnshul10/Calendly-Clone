@@ -12,6 +12,7 @@ import { formatDateTime, friendlyDate, getLocalTimezone } from '../../utils/date
 
 export default function BookingPage() {
   const { slug } = useParams();
+  
   const navigate = useNavigate();
 
   const [eventType, setEventType] = useState(null);
