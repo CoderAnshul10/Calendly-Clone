@@ -199,7 +199,7 @@ async function createBooking(req, res, next) {
     isAdmin: true,
   });
 
-  await sendEmailsSafely([
+  sendEmailsSafely([
     sendEmail({ to: inviteeEmail, subject: `Booking confirmed: ${eventType.name}`, html: htmlInvitee }),
     sendEmail({ to: process.env.ADMIN_EMAIL, subject: `New booking: ${eventType.name} with ${inviteeName}`, html: htmlAdmin }),
   ]);
@@ -262,7 +262,7 @@ async function cancelBooking(req, res, next) {
   }
 
   const html = cancellationEmail({ booking, eventType: booking.eventType, reason, cancelledBy: 'the invitee' });
-  await sendEmailsSafely([
+  sendEmailsSafely([
     sendEmail({ to: booking.invitee_email, subject: 'Booking cancelled', html }),
     sendEmail({ to: process.env.ADMIN_EMAIL, subject: `Booking cancelled: ${booking.eventType.name}`, html }),
   ]);
@@ -330,7 +330,7 @@ async function rescheduleBooking(req, res, next) {
     eventType: oldBooking.eventType,
     hostName: process.env.ADMIN_NAME || 'The Host',
   });
-  await sendEmailsSafely([
+  sendEmailsSafely([
     sendEmail({ to: oldBooking.invitee_email, subject: 'Your booking has been rescheduled', html }),
     sendEmail({ to: process.env.ADMIN_EMAIL, subject: `Booking rescheduled: ${oldBooking.eventType.name}`, html }),
   ]);
