@@ -4,7 +4,11 @@ const rawBaseUrl = import.meta.env.VITE_API_BASE_URL;
 let baseUrl = null;
 
 if (rawBaseUrl) {
-  const normalizedBaseUrl = rawBaseUrl.replace(/\/$/, '');
+  let normalizedBaseUrl = rawBaseUrl.trim().replace(/\/$/, '');
+  if (!/^https?:\/\//i.test(normalizedBaseUrl)) {
+    normalizedBaseUrl = `https://${normalizedBaseUrl}`;
+  }
+
   try {
     new URL(normalizedBaseUrl);
     baseUrl = normalizedBaseUrl;
@@ -12,7 +16,7 @@ if (rawBaseUrl) {
     console.error(
       'Invalid VITE_API_BASE_URL value:',
       normalizedBaseUrl,
-      'Please use a valid https://... Railway backend URL without underscores.'
+      'Please use a valid Railway backend URL like https://your-app.up.railway.app.'
     );
   }
 }
