@@ -1,36 +1,47 @@
 require('dotenv').config();
-const nodemailer = require('nodemailer');
-
-const emailPort = parseInt(process.env.EMAIL_PORT, 10);
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: emailPort,
-  secure: emailPort === 465, // Use SSL/TLS for port 465
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
 
 /**
- * Send an email
+ * Send an email using Resend API over HTTP (port 443)
+ * This avoids Railway/Vercel SMTP blocking on ports 25, 465, and 587.
  * @param {Object} options - { to, subject, html }
  */
 async function sendEmail({ to, subject, html }) {
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+
+  if (!RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY is not set. Skipping email send.');
+    return;
+  }
+
   const mailOptions = {
-    from: `"Calendly Clone" <${process.env.EMAIL_FROM || 'noreply@calendlyclone.com'}>`,
-    to,
+    // Resend requires using their onboarding domain until you verify your own domain
+    from: "Calendly Clone <onboarding@resend.dev>",
+    to: [to],
     subject,
     html,
   };
+
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`Email sent to ${to}: ${info.messageId}`);
-    return info;
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(mailOptions)
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Resend API error');
+    }
+    
+    console.log(`Email successfully sent via Resend to ${to}: ${data.id}`);
+    return data;
   } catch (err) {
     console.error('Email send error:', err.message);
-    // Don't throw — email failure should not break booking flow
   }
 }
 
 module.exports = { sendEmail };
+
