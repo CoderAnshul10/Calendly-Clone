@@ -3,6 +3,8 @@ import axios from 'axios';
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const baseUrl = rawBaseUrl ? rawBaseUrl.replace(/\/$/, '') : null;
 
+console.log('Resolved VITE_API_BASE_URL:', baseUrl);
+
 if (!baseUrl) {
   console.error(
     'Missing VITE_API_BASE_URL. Set this environment variable in Vercel to your Railway backend URL.'
