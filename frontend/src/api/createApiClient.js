@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export default function createApiClient(prefix) {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
 
   const client = axios.create({
     baseURL: `${baseUrl}${prefix}`,
